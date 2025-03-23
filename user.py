@@ -1,3 +1,4 @@
+# client.py
 import socket
 import threading
 
@@ -7,6 +8,7 @@ def receive_messages(client_socket):
         try:
             message = client_socket.recv(1024).decode('utf-8')
             if not message:
+                print("Connection closed by the server.")
                 break
             print(f"Received: {message}")
         except Exception as e:
@@ -25,19 +27,16 @@ def send_messages(client_socket):
 
 # Main client function
 def main():
-    server_host = input("Enter server IP address: ")  # Replace with the server's public IP
+    server_ip = "169.254.157.6"  # Server's IP address
     host_code = input("Enter host code: ")  # Host code provided by the server
-
-    # Get the port for the chat session using the host code
-    # (In a real-world scenario, this would be fetched from the server)
-    port = int(host_code)  # For simplicity, use the host code as the port
+    port = int(input("Enter port: "))  # Port provided by the server
 
     # Create a socket object
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     try:
         # Connect to the server
-        client_socket.connect((server_host, port))
+        client_socket.connect((server_ip, port))
         print("Connected to the chat server. Start chatting!")
 
         # Start threads for sending and receiving messages
@@ -55,6 +54,7 @@ def main():
     finally:
         # Close the connection
         client_socket.close()
+        print("Disconnected from the server.")
 
 if __name__ == '__main__':
     main()
