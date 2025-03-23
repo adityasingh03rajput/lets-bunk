@@ -12,7 +12,7 @@ import threading
 USER_FILE = "users.json"
 
 # Server configuration
-HOST = "127.0.0.1"
+HOST = "192.168.189.185"  # Replace with the server's IP address
 PORT = 65432
 
 # Connect to the server
