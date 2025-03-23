@@ -2,10 +2,9 @@ import socket
 import threading
 import json
 import os
-import random
 
 # Server configuration
-HOST = "0.0.0.0"  # Listen on all available interfaces
+HOST = "0.0.0.0"  # Listen on all interfaces
 PORT = 65432
 
 # File to store data
@@ -18,9 +17,8 @@ def load_data():
             with open(DATA_FILE, "r") as file:
                 return json.load(file)
         except json.JSONDecodeError:
-            # If the file is empty or invalid, return default data
-            return {"attendance": {}, "students_online": {}}
-    return {"attendance": {}, "students_online": {}}
+            return {"attendance": {}, "students_online": {}, "teachers_online": {}}
+    return {"attendance": {}, "students_online": {}, "teachers_online": {}}
 
 # Save data to file
 def save_data(data):
@@ -42,7 +40,11 @@ def handle_client(conn, addr):
 
             if action == "login":
                 username = message.get("username")
-                data["students_online"][username] = conn
+                role = message.get("role")
+                if role == "student":
+                    data["students_online"][username] = conn
+                elif role == "teacher":
+                    data["teachers_online"][username] = conn
                 save_data(data)
                 broadcast_attendance()
 
@@ -58,22 +60,20 @@ def handle_client(conn, addr):
                 save_data(data)
                 broadcast_attendance()
 
-            elif action == "random_ring":
-                present_students = [user for user, status in data["attendance"].items() if status == "present"]
-                if present_students:
-                    selected_student = random.choice(present_students)
-                    conn.send(json.dumps({"action": "ring", "student": selected_student}).encode("utf-8"))
-                    if selected_student in data["students_online"]:
-                        data["students_online"][selected_student].send(json.dumps({"action": "ring"}).encode("utf-8"))
-
         except Exception as e:
             print(f"Error: {e}")
             break
 
-    # Remove the student from the online list when they disconnect
+    # Remove the user from the online list when they disconnect
     for username, client_conn in data["students_online"].items():
         if client_conn == conn:
             del data["students_online"][username]
+            save_data(data)
+            broadcast_attendance()
+            break
+    for username, client_conn in data["teachers_online"].items():
+        if client_conn == conn:
+            del data["teachers_online"][username]
             save_data(data)
             broadcast_attendance()
             break
@@ -83,8 +83,11 @@ def handle_client(conn, addr):
 # Broadcast attendance data to all clients
 def broadcast_attendance():
     data = load_data()
+    attendance_data = json.dumps({"action": "update_attendance", "data": data["attendance"]}).encode("utf-8")
     for conn in data["students_online"].values():
-        conn.send(json.dumps({"action": "update_attendance", "data": data["attendance"]}).encode("utf-8"))
+        conn.send(attendance_data)
+    for conn in data["teachers_online"].values():
+        conn.send(attendance_data)
 
 # Start the server
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
