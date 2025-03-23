@@ -5,17 +5,12 @@ import json
 import threading
 
 # Server configuration
-HOST = "192.168.1.100"  # Replace with the server's IP address
+HOST = "192.168.189.185"  # Replace with the server's IP address
 PORT = 65432
 
 # Connect to the server
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((HOST, PORT))
-
-# Function to send data to the server
-def send_data(action):
-    data = {"action": action}
-    client_socket.send(json.dumps(data).encode("utf-8"))
 
 # Function to update the attendance table
 def update_table(data):
