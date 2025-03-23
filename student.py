@@ -2,9 +2,6 @@ import tkinter as tk
 from tkinter import messagebox
 import json
 import os
-import ctypes
-import time
-import subprocess
 import socket
 import threading
 
@@ -12,7 +9,7 @@ import threading
 USER_FILE = "users.json"
 
 # Server configuration
-HOST = "192.168.189.185"  # Replace with the server's IP address
+HOST = "192.168.189.185"  # Replace with the server's IP address (Pranav's computer)
 PORT = 65432
 
 # Connect to the server
@@ -30,25 +27,6 @@ def load_users():
 def save_users(users):
     with open(USER_FILE, "w") as file:
         json.dump(users, file, indent=4)
-
-# Signup function
-def signup():
-    username = entry_username.get()
-    password = entry_password.get()
-
-    if not username or not password:
-        messagebox.showwarning("Input Error", "Please fill in all fields.")
-        return
-
-    users = load_users()
-    if username in users:
-        messagebox.showwarning("Signup Error", "Username already exists.")
-        return
-
-    users[username] = password
-    save_users(users)
-    messagebox.showinfo("Signup Success", "Signup successful!")
-    clear_entries()
 
 # Login function
 def login():
@@ -74,36 +52,9 @@ def clear_entries():
     entry_username.delete(0, tk.END)
     entry_password.delete(0, tk.END)
 
-# Hide the console window (Windows only)
-if os.name == 'nt':
-    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
-
-# Authorized Wi-Fi BSSID (replace with your school's Wi-Fi BSSID)
-AUTHORIZED_BSSID = "ee:ee:6d:9d:6f:ba"  # Updated with your school's BSSID
-
-# Function to check Wi-Fi connection
-def check_wifi_connection():
-    """Check if the device is connected to the authorized Wi-Fi using BSSID."""
-    try:
-        # Use 'netsh' to get Wi-Fi interface details
-        result = subprocess.run(
-            ["netsh", "wlan", "show", "interfaces"],  # Fixed typo: 'interfaces' (plural)
-            capture_output=True, text=True
-        )
-        # Extract BSSID from the output
-        for line in result.stdout.splitlines():
-            if "BSSID" in line:
-                # Extract the BSSID value
-                bssid = ":".join(line.split(":")[1:]).strip().lower()  # Handle extra spaces
-                if bssid == AUTHORIZED_BSSID.lower():  # Compare case-insensitively
-                    return True
-    except Exception as e:
-        messagebox.showerror("Error", f"Error checking Wi-Fi status: {e}")
-    return False
-
 # Function to send data to the server
 def send_data(action, username=None):
-    data = {"action": action, "username": username}
+    data = {"action": action, "username": username, "role": "student"}
     client_socket.send(json.dumps(data).encode("utf-8"))
 
 # Function to update the timer
@@ -111,27 +62,15 @@ def update_timer(username):
     global timer, timer_started
     if timer_started:
         if timer > 0:
-            if check_wifi_connection():
-                timer_label.config(text=f"Time remaining: {timer} seconds")
-                timer -= 1
-                root_attend.after(1000, update_timer, username)  # Schedule the next update
-            else:
-                timer_label.config(text="Unauthorized Wi-Fi! Timer paused.", fg="red")
-                check_wifi_reconnect(username)
+            timer_label.config(text=f"Time remaining: {timer} seconds")
+            timer -= 1
+            root_attend.after(1000, update_timer, username)  # Schedule the next update
         else:
             timer_label.config(text="Time's up! Attendance Marked.", fg="green")
             messagebox.showinfo("Attendance", "You are now marked as present.")
             timer_started = False
             start_button.config(state=tk.NORMAL)
             send_data("stop_timer", username)  # Notify server that the timer has stopped
-
-# Function to check Wi-Fi reconnection
-def check_wifi_reconnect(username):
-    if not check_wifi_connection():
-        root_attend.after(1000, check_wifi_reconnect, username)  # Check again after 1 second
-    else:
-        timer_label.config(text="Authorized Wi-Fi reconnected! Resuming timer.", fg="blue")
-        update_timer(username)
 
 # Function to start the timer
 def start_timer(username):
@@ -158,7 +97,7 @@ def start_attendance_timer(username):
 
     instructions_label = tk.Label(
         root_attend,
-        text="Click 'Start Timer' to begin. The timer will only run if you're connected to the authorized Wi-Fi.",
+        text="Click 'Start Timer' to begin. The timer will mark you as present.",
         wraplength=350,
         font=("Arial", 10)
     )
@@ -202,10 +141,6 @@ label_password = tk.Label(root, text="Password:")
 label_password.pack(pady=5)
 entry_password = tk.Entry(root, show="*")
 entry_password.pack(pady=5)
-
-# Signup Button
-button_signup = tk.Button(root, text="Signup", command=signup)
-button_signup.pack(pady=10)
 
 # Login Button
 button_login = tk.Button(root, text="Login", command=login)
