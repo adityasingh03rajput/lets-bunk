@@ -5,7 +5,7 @@ import json
 import threading
 
 # Server configuration
-HOST = "192.168.189.185"  # Replace with the server's IP address
+HOST = "192.168.189.185"  # Replace with the server's IP address (Pranav's computer)
 PORT = 65432
 
 # Connect to the server
