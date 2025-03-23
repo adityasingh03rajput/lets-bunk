@@ -15,13 +15,29 @@ def load_data():
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r") as file:
-                return json.load(file)
+                data = json.load(file)
+                # Ensure all required keys are present
+                if "attendance" not in data:
+                    data["attendance"] = {}
+                if "students_online" not in data:
+                    data["students_online"] = {}
+                if "teachers_online" not in data:
+                    data["teachers_online"] = {}
+                return data
         except json.JSONDecodeError:
+            # If the file is empty or invalid, return default data
             return {"attendance": {}, "students_online": {}, "teachers_online": {}}
     return {"attendance": {}, "students_online": {}, "teachers_online": {}}
 
 # Save data to file
 def save_data(data):
+    # Ensure all required keys are present before saving
+    if "attendance" not in data:
+        data["attendance"] = {}
+    if "students_online" not in data:
+        data["students_online"] = {}
+    if "teachers_online" not in data:
+        data["teachers_online"] = {}
     with open(DATA_FILE, "w") as file:
         json.dump(data, file, indent=4)
 
