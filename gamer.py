@@ -1,3 +1,4 @@
+# server.py
 import socket
 import threading
 import random
@@ -33,17 +34,21 @@ def handle_chat(client1, client2):
     client2.close()
 
 # Function to start the chat server
-def start_chat_server(port):
+def start_chat_server(port, host_code):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('0.0.0.0', port))
+    server_socket.bind(('0.0.0.0', port))  # Bind to all interfaces
     server_socket.listen(2)  # Allow 2 clients to connect
-    print(f"Chat server started on port {port}...")
+    print(f"Chat server started on port {port} for host code {host_code}...")
 
     # Wait for two clients to connect
     client1, addr1 = server_socket.accept()
     print(f"Client 1 connected: {addr1}")
     client2, addr2 = server_socket.accept()
     print(f"Client 2 connected: {addr2}")
+
+    # Notify clients that they are connected
+    client1.send("You are connected to the chat room!".encode('utf-8'))
+    client2.send("You are connected to the chat room!".encode('utf-8'))
 
     # Start a thread to handle communication between the two clients
     chat_thread = threading.Thread(target=handle_chat, args=(client1, client2))
@@ -63,10 +68,12 @@ def main():
     chat_sessions[host_code] = port
 
     # Start the chat server in a new thread
-    chat_thread = threading.Thread(target=start_chat_server, args=(port,))
+    chat_thread = threading.Thread(target=start_chat_server, args=(port, host_code))
     chat_thread.start()
 
     print(f"Host code: {host_code}")
+    print(f"Server IP: 169.254.157.6")
+    print(f"Port: {port}")
     print("Waiting for users to join...")
 
 if __name__ == '__main__':
