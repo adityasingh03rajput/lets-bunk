@@ -71,9 +71,11 @@ def main():
     chat_thread = threading.Thread(target=start_chat_server, args=(port, host_code))
     chat_thread.start()
 
-    print(f"Host code: {host_code}")
-    print(f"Server IP: 169.254.157.6")
+    # Display only the necessary information for users to connect
+    print("\n--- Chat Room Information ---")
+    print(f"Host Code: {host_code}")
     print(f"Port: {port}")
+    print("Share the above details with your friends to connect.")
     print("Waiting for users to join...")
 
 if __name__ == '__main__':
